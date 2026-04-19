@@ -1,0 +1,74 @@
+---
+title: "Market_modeling"
+author: "Damn"
+date: "2023-03-13"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(readr)
+data=read.csv(file="C:/Ajay/Tasks/Data_Market Response Modeling_p.csv")
+data$promotions = as.numeric(gsub(",",".",data$promotions))
+data$lag_Twitter_valence=as.numeric(gsub(",",".",data$lag_Twitter_valence))
+data$lag_Twitter=data$lag_Twitter_valence*data$lag_Twitter_volume
+```
+
+```{r}
+acquisition.lm = lm(acquisition ~ buzz.event + media.event + holidays + promotions + lag_traditional.advertising + lag_Twitter_valence + lag_Twitter_volume + lag_FB_impressions , data = data)
+summary(acquisition.lm)
+library(ggplot2)
+
+dynamic_effect  = lm(acquisition ~ buzz.event + holidays, data = data)
+summary(dynamic_effect)
+
+# Create the plot
+ggplot(data = data, aes(x = buzz.event, y = acquisition)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  xlab("Fitted Values") +
+  ylab("Residuals") +
+  ggtitle("Residuals vs Fitted Values")
+ggplot(data = data, aes(x = buzz.event, y = acquisition)) +
+  geom_point(size = 4, color = "red", shape = 21, fill = "white", stroke = 2) +
+  labs(title = "My Scatter Plot", x = "X-axis", y = "Y-axis")
+
+```
+# 2
+The R-squared of the model is 0.4277, indicating that 42.77% of acquisition can be explained by the model.The p-value of the model is 1.565e-10, indicating that the model has a significant linear relationship.The F-statistic of 10.18 with 8 and 109 degrees of freedom and a very small p-value of 1.565e-10 indicate that the multiple linear regression model fits the data well and that at least one of the independent variables is significantly related to the dependent variable. 
+
+# 3
+Dynamic effects consists of Carryover effects are the effects of current marketing expenditures on future sales.
+Carryover effects are classified as delayed-response effects, customer holdover effects, new-trier effects, and stocking effects.
+Delayed-response effects occur when there is a lag between when marketing dollars are spent and when they have an impact, and customer-holdover effects occur when new customers created by marketing expenditures remain customers for long periods of time. 
+in our case, the lagged traditional advertising variable (lag_traditional.advertising) captures the carryover effect of traditional advertising on customer acquisition. Similarly, the lagged Twitter sentiment variable (lag_Twitter_valence) and lagged Twitter volume variable (lag_Twitter_volume) may capture the delayed response effect of social media marketing on customer acquisition. Finally, the lagged Facebook impressions variable (lag_FB_impressions) may capture the customer holdover effect of Facebook advertising on customer acquisition.
+
+# 4
+According to the given regression model, the coefficient estimate for the independent variable lag_traditional.advertising is positive (0.00097) and statistically significant (p-value < 0.0001), holding all other variables constant.
+For each euro increase in the cost of traditional advertising calls, an average increase of 0.0008684 acquisition will be obtained. For media event, for each euro increase in the cost of traditional advertising calls, an average increase of 0.0024244 acquisition will be obtained.
+This suggests that traditional advertising and acquisition have a positive relationship.
+In other words, all else being equal, an increase in traditional advertising spending is associated with an increase in acquisition. 
+It is important to note, however, that correlation does not always imply causation.
+While the regression model suggests that traditional advertising has a positive relationship with acquisition, other factors may also influence acquisition.
+Furthermore, the model does not prove that the relationship is causal; additional research and testing would be required to establish a causal relationship between traditional advertising and acquisition. 
+# 5
+According to the given regression model, the coefficient estimate for the independent variable lag_FB_impressions is positive (0.0001489) but not statistically significant (p-value = 0.493995), holding all other variables constant.
+This suggests that after controlling for other variables, there may not be a significant relationship between Facebook impressions and acquisition.
+It is important to note, however, that a non-significant coefficient does not necessarily imply that there is no effect.
+It is possible that the sample size is insufficient to detect a significant effect, or that there is a complex relationship between Facebook impressions and acquisition that the model does not fully capture. 
+
+# 6
+From the perspective of model coefficients, Twitter has the best effect, but this estimate is not significant and may have errors.
+
+```{r}
+library(MASS)
+fit2=lm(acquisition ~ lag_traditional.advertising+lag_Twitter+lag_FB_impressions+promotions+holidays+buzz.event+media.event+media.event:lag_traditional.advertising+media.event:promotions+media.event:lag_Twitter+media.event:lag_FB_impressions+holidays:lag_traditional.advertising+holidays:lag_Twitter+holidays:lag_FB_impressions+holidays:promotions+lag_traditional.advertising:buzz.event+lag_Twitter:buzz.event+lag_FB_impressions:buzz.event+promotions:buzz.event,data)
+
+step_lm<-stepAIC(fit2,
+                 direction = "both",
+                 trace = TRUE)
+summary(step_lm)
+```
